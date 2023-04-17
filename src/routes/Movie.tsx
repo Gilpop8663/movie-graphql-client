@@ -1,6 +1,6 @@
-import { gql, useQuery } from '@apollo/client';
-import { useParams } from 'react-router-dom';
-import styled from 'styled-components';
+import { gql, useQuery } from "@apollo/client";
+import { useParams } from "react-router-dom";
+import styled from "styled-components";
 
 interface DetailMovieInfo {
   movie: {
@@ -49,17 +49,13 @@ const Subtitle = styled.h4`
   margin-bottom: 10px;
 `;
 
-const Description = styled.p`
-  font-size: 28px;
-`;
-
 const Image = styled.div<{
   background: string;
 }>`
   width: 25%;
   height: 60%;
   background-color: transparent;
-  background-image: url(${props => props.background});
+  background-image: url(${(props) => props.background});
   background-size: cover;
   background-position: center center;
   border-radius: 7px;
@@ -67,18 +63,38 @@ const Image = styled.div<{
 
 export default function Movie() {
   const { id } = useParams();
-  const { data, loading } = useQuery<DetailMovieInfo>(GET_MOVIE, {
+  const {
+    data,
+    loading,
+    client: { cache },
+  } = useQuery<DetailMovieInfo>(GET_MOVIE, {
     variables: {
       movieId: id,
     },
   });
 
+  const onClick = () => {
+    cache.writeFragment({
+      id: `Movie:${id}`,
+      fragment: gql`
+        fragment MovieFragment on Movie {
+          isLiked
+        }
+      `,
+      data: {
+        isLiked: !data?.movie.isLiked,
+      },
+    });
+  };
+
   return (
     <Container>
       <Column>
-        <Title>{loading ? 'Loading...' : `${data?.movie?.title}`}</Title>
+        <Title>{loading ? "Loading..." : `${data?.movie?.title}`}</Title>
         <Subtitle>⭐️ {data?.movie?.rating}</Subtitle>
-        <button>{data?.movie.isLiked ? 'UnLike' : 'Like'}</button>
+        <button onClick={onClick}>
+          {data?.movie.isLiked ? "UnLike" : "Like"}
+        </button>
       </Column>
       <Image background={data?.movie?.medium_cover_image as string} />
     </Container>
